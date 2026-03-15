@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/attendanceDB")
+mongoose.connect(process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0")
 .then(()=>console.log("MongoDB Connected"))
 .catch(err=>console.log(err));
 
