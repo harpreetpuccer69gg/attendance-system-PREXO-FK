@@ -9,7 +9,12 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://attendprexo.vercel.app/"
+  ]
+}));
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0")
