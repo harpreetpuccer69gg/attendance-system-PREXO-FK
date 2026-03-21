@@ -1,12 +1,11 @@
-const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const User = require("./models/User");
+const connectDB = require("./config/db");
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0";
-
-mongoose.connect(MONGO_URI)
-  .then(async () => {
+const seedAdmin = async () => {
+  try {
+    await connectDB();
     const existing = await User.findOne({ email: "admin@flipkart.com" });
     if (existing) {
       console.log("Admin already exists:", existing.email);
@@ -22,5 +21,10 @@ mongoose.connect(MONGO_URI)
     });
     console.log("✅ Admin seeded — email: admin@flipkart.com | password: Admin@1234");
     process.exit(0);
-  })
-  .catch(err => { console.error(err); process.exit(1); });
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+};
+
+seedAdmin();

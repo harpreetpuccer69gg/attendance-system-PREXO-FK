@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
@@ -17,9 +17,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0")
-.then(()=>console.log("MongoDB Connected"))
-.catch(err=>console.log(err));
+// Connection
+connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/stores", storeRoutes);
