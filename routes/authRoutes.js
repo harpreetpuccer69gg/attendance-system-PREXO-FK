@@ -156,7 +156,7 @@ return res.status(400).json({ message: "Google account info required" });
 }
 
 // Only allow users already registered in our DB
-const user = await User.findOne({ email: googleEmail });
+const user = await User.findOne({ email: { $regex: new RegExp("^" + googleEmail + "$", "i") } });
 
 if (!user) {
 return res.status(403).json({
