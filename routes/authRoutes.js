@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
 
-const SECRET = "attendance_secret";
+const SECRET = process.env.JWT_SECRET || "attendance_secret";
 
 
 /* =========================
@@ -18,7 +18,7 @@ try{
 
 const {name,email,password,city,phone} = req.body;
 
-const ALLOWED_CITIES = ["NCR","Kolkata","Mumbai","Bengaluru"];
+const ALLOWED_CITIES = ["NCR","Kolkata","Mumbai","Bengaluru","Hyderabad"];
 
 if(!city || !ALLOWED_CITIES.includes(city)){
 return res.status(400).json({
