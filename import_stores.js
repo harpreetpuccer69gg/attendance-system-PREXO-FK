@@ -1,9 +1,10 @@
 // Script to import stores from stores.json into MongoDB Store collection
 const mongoose = require("mongoose");
+require("dotenv").config();
 const Store = require("./models/Store");
 const stores = require("./stores.json");
 
-const MONGO_URI = "mongodb://127.0.0.1:27017/attendanceDB";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0";
 
 async function importStores() {
   await mongoose.connect(MONGO_URI);

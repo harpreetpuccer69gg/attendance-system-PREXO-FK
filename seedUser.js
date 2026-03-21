@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+require("dotenv").config();
 const User = require("./models/User");
 
-mongoose.connect("mongodb://127.0.0.1:27017/attendanceDB")
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://hs8103536_db_user:WYlrcGGSfrn7rTcv@cluster0.blkpulz.mongodb.net/?appName=Cluster0";
+
+mongoose.connect(MONGO_URI)
   .then(async () => {
     const existing = await User.findOne({ email: "ankitsinghaniaaks@gmail.com" });
     if (existing) {
