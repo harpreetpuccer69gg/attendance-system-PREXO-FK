@@ -13,7 +13,9 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://attendprexo.vercel.app/"
+    "http://localhost:5174",
+    "https://attendprexo.vercel.app",
+    "https://attendance-proxo.vercel.app"
   ]
 }));
 app.use(express.json());
