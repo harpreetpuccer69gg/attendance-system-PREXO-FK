@@ -68,4 +68,35 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
+// Delete user by email
+router.delete("/email/:email", auth, async (req, res) => {
+  try {
+    const user = await User.findOneAndDelete({ email: req.params.email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Change user role by email
+router.patch("/role", auth, async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role) return res.status(400).json({ message: "Email and role are required" });
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { role },
+      { new: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "User role updated successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
