@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const SECRET = process.env.JWT_SECRET || "attendance_secret";
 
@@ -89,16 +91,16 @@ message:"Invalid password"
 }
 
 const token = jwt.sign(
-{ email: user.email, role: user.role || "tl" },
+{ email: user.email, role: user.role },
 SECRET,
 {expiresIn:"1d"}
 );
 
-res.json({
-message:"Login successful",
-token,
-role: user.role || "tl"
-});
+    res.json({
+      message: "Login successful",
+      token,
+      role: user.role // Trust the user object from DB
+    });
 
 }catch(err){
 
@@ -125,10 +127,12 @@ if(!authHeader) return res.status(401).json({ message:"Token required" });
 const token = authHeader.replace("Bearer ","");
 const decoded = jwt.verify(token, SECRET);
 
-const user = await User.findOne({ email: decoded.email }).select("name email city role");
-if(!user) return res.status(404).json({ message:"User not found" });
-
-res.json({ name: user.name, email: user.email, city: user.city, role: user.role || "tl" });
+    res.json({
+      name: user.name,
+      email: user.email,
+      city: user.city,
+      role: user.role
+    });
 
 }catch(err){
 
@@ -146,49 +150,57 @@ message:"Server error"
 ========================= */
 
 router.post("/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
 
-try {
+    if (!credential) {
+      return res.status(400).json({ message: "Google credential required" });
+    }
 
-const { googleEmail, googleName, googleId } = req.body;
+    // 1. Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleEmail = payload.email;
 
-if (!googleEmail) {
-return res.status(400).json({ message: "Google account info required" });
-}
+    // 2. Only allow users already registered in our DB
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp("^" + googleEmail + "$", "i") } 
+    });
 
-// Only allow users already registered in our DB
-const user = await User.findOne({ email: { $regex: new RegExp("^" + googleEmail + "$", "i") } });
+    if (!user) {
+      return res.status(403).json({
+        message: "Access denied. Your Google account (" + googleEmail + ") is not registered. Please contact your admin."
+      });
+    }
 
-if (!user) {
-return res.status(403).json({
-message: "Access denied. Your Google account (" + googleEmail + ") is not registered in the system. Please contact your admin."
-});
-}
+    // 3. Save googleId on first Google login
+    if (payload.sub && !user.googleId) {
+      user.googleId = payload.sub;
+      await user.save();
+    }
 
-// Save googleId on first Google login
-if (googleId && !user.googleId) {
-user.googleId = googleId;
-await user.save();
-}
+    // 4. Generate local JWT with current roles from DB
+    const token = jwt.sign(
+      { email: user.email, role: user.role },
+      SECRET,
+      { expiresIn: "1d" }
+    );
 
-const token = jwt.sign(
-{ email: user.email, role: user.role || "tl" },
-SECRET,
-{ expiresIn: "1d" }
-);
+    res.json({
+      message: "Google login successful",
+      token,
+      role: user.role,
+      name: user.name,
+      email: user.email
+    });
 
-res.json({
-message: "Google login successful",
-token,
-role: user.role,
-name: user.name,
-email: user.email
-});
-
-} catch (err) {
-console.error("Google auth error:", err.message);
-res.status(500).json({ message: "Server error" });
-}
-
+  } catch (err) {
+    console.error("Google auth error:", err.message);
+    res.status(401).json({ message: "Identity verification failed" });
+  }
 });
 
 
