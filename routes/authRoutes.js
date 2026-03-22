@@ -173,7 +173,8 @@ router.post("/google", async (req, res) => {
     }
 
     // 3. Find user in our DB
-    const user = await User.findOne({ email: email.trim() }).collation({ locale: 'en', strength: 2 });
+    const user = await User.findOne({ email});
+    console.log(user,"email------")
 
     if (!user) {
       return res.status(403).json({
@@ -200,6 +201,14 @@ router.post("/google", async (req, res) => {
     console.error("Google auth error:", err.message);
     res.status(401).json({ message: "Login failed" });
   }
+});
+
+/* =========================
+   LOGOUT USER
+========================= */
+
+router.post("/logout", (req, res) => {
+  res.json({ message: "Logout successful" });
 });
 
 
