@@ -154,25 +154,10 @@ message:"Server error"
 
 router.post("/google", async (req, res) => {
   try {
-    const { credential, googleEmail: oldEmail } = req.body;
-    let email;
+    const email = req.body.googleEmail;
 
-    if (credential) {
-      // 1. Verify Google token (Secure)
-      const ticket = await client.verifyIdToken({
-        idToken: credential,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      const payload = ticket.getPayload();
-      email = payload.email;
-    } else if (oldEmail) {
-      // 2. Fallback to old body structure (Temporary insecure)
-      email = oldEmail;
-    } else {
-      return res.status(400).json({ message: "Google credential or email required" });
-    }
-
-    // 3. Find user in our DB
+    console.log(email,"---------","googleEmail")
+ 
     const user = await User.findOne({ email});
     console.log(user,"email------")
 
