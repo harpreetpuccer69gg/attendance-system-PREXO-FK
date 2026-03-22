@@ -72,9 +72,8 @@ router.post("/login", async (req,res)=>{
 
 try{
 
-const {email,password} = req.body;
-
-const user = await User.findOne({email});
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email.trim() }).collation({ locale: 'en', strength: 2 });
 
 if(!user){
 return res.status(404).json({
@@ -127,12 +126,16 @@ if(!authHeader) return res.status(401).json({ message:"Token required" });
 const token = authHeader.replace("Bearer ","");
 const decoded = jwt.verify(token, SECRET);
 
-    res.json({
-      name: user.name,
-      email: user.email,
-      city: user.city,
-      role: user.role
-    });
+const user = await User.findOne({ email: decoded.email.trim() }).collation({ locale: 'en', strength: 2 }).select("name email city role");
+
+if (!user) return res.status(404).json({ message: "User not found" });
+
+res.json({
+  name: user.name,
+  email: user.email,
+  city: user.city,
+  role: user.role
+});
 
 }catch(err){
 
@@ -170,9 +173,7 @@ router.post("/google", async (req, res) => {
     }
 
     // 3. Find user in our DB
-    const user = await User.findOne({ 
-      email: { $regex: new RegExp("^" + email + "$", "i") } 
-    });
+    const user = await User.findOne({ email: email.trim() }).collation({ locale: 'en', strength: 2 });
 
     if (!user) {
       return res.status(403).json({
