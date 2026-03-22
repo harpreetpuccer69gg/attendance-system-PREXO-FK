@@ -151,38 +151,36 @@ message:"Server error"
 
 router.post("/google", async (req, res) => {
   try {
-    const { credential } = req.body;
+    const { credential, googleEmail: oldEmail } = req.body;
+    let email;
 
-    if (!credential) {
-      return res.status(400).json({ message: "Google credential required" });
+    if (credential) {
+      // 1. Verify Google token (Secure)
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+    } else if (oldEmail) {
+      // 2. Fallback to old body structure (Temporary insecure)
+      email = oldEmail;
+    } else {
+      return res.status(400).json({ message: "Google credential or email required" });
     }
 
-    // 1. Verify Google token
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const googleEmail = payload.email;
-
-    // 2. Only allow users already registered in our DB
+    // 3. Find user in our DB
     const user = await User.findOne({ 
-      email: { $regex: new RegExp("^" + googleEmail + "$", "i") } 
+      email: { $regex: new RegExp("^" + email + "$", "i") } 
     });
 
     if (!user) {
       return res.status(403).json({
-        message: "Access denied. Your Google account (" + googleEmail + ") is not registered. Please contact your admin."
+        message: "Access denied. Your Google account (" + email + ") is not registered. Please contact your admin."
       });
     }
 
-    // 3. Save googleId on first Google login
-    if (payload.sub && !user.googleId) {
-      user.googleId = payload.sub;
-      await user.save();
-    }
-
-    // 4. Generate local JWT with current roles from DB
+    // 4. Generate local JWT with roles from DB
     const token = jwt.sign(
       { email: user.email, role: user.role },
       SECRET,
@@ -199,7 +197,7 @@ router.post("/google", async (req, res) => {
 
   } catch (err) {
     console.error("Google auth error:", err.message);
-    res.status(401).json({ message: "Identity verification failed" });
+    res.status(401).json({ message: "Login failed" });
   }
 });
 

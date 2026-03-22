@@ -42,4 +42,10 @@ async function changeUserRole(email, newRole) {
 // Get arguments from command line
 const emailArg = process.argv[2];
 const roleArg = process.argv[3];
-changeUserRole("ssangram111@gmail.com", "admin");
+
+if (emailArg && roleArg) {
+  changeUserRole(emailArg, roleArg);
+} else {
+  console.log("Please provide email and role: node change_role.js email role");
+  process.exit(1);
+}
