@@ -179,7 +179,7 @@ SECRET,
 res.json({
 message: "Google login successful",
 token,
-role: user.role || "tl",
+role: user.role,
 name: user.name,
 email: user.email
 });
